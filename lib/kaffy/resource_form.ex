@@ -391,7 +391,10 @@ defmodule Kaffy.ResourceForm do
   defp build_changeset_value(value), do: to_string(value)
 
   def kaffy_input(conn, changeset, form, field, options) do
-    ft = Kaffy.ResourceSchema.field_type(changeset.data.__struct__, field)
+    ft = case Kaffy.ResourceSchema.field_type(changeset.data.__struct__, field) do
+      {:parameterized, ft} -> ft
+      ft -> ft
+    end
 
     case Kaffy.Utils.is_module(ft) && Keyword.has_key?(ft.__info__(:functions), :render_form) do
       true ->
