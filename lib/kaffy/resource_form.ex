@@ -184,6 +184,11 @@ defmodule Kaffy.ResourceForm do
 
         multiple_select(form, field, values, [value: value] ++ opts)
 
+      :multi ->
+        values = options[:values_fn].(data, conn)
+        value = Map.get(data, field, []) |> Enum.map(fn a -> a.id end)
+        multiple_select(form, field, values, [value: value] ++ opts)
+
       {:array, _} ->
         case !is_nil(options[:values_fn]) && is_function(options[:values_fn], 2) do
           true ->
