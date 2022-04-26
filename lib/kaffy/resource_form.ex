@@ -392,7 +392,7 @@ defmodule Kaffy.ResourceForm do
 
   def kaffy_input(conn, changeset, form, field, options) do
     ft = case Kaffy.ResourceSchema.field_type(changeset.data.__struct__, field) do
-      {:parameterized, ft} -> ft
+      {:parameterized, ft, _} -> ft
       ft -> ft
     end
 
