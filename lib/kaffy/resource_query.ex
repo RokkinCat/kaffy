@@ -41,8 +41,8 @@ defmodule Kaffy.ResourceQuery do
 
   def get_ordering(resource, params) do
     default_ordering = Kaffy.ResourceAdmin.ordering(resource)
-    default_order_field = Map.get(params, "_of", "nil") |> String.to_existing_atom()
-    default_order_way = Map.get(params, "_ow", "nil") |> String.to_existing_atom()
+    default_order_field = Map.get(params, "_of", "nil") |> String.to_atom()
+    default_order_way = Map.get(params, "_ow", "nil") |> String.to_atom()
 
     case is_nil(default_order_field) or is_nil(default_order_way) do
       true -> default_ordering
@@ -158,7 +158,7 @@ defmodule Kaffy.ResourceQuery do
           query
 
         false ->
-          field_name = String.to_existing_atom(filter.name)
+          field_name = String.to_atom(filter.name)
           from(s in query, where: field(s, ^field_name) == ^filter.value)
       end
 

@@ -18,7 +18,7 @@
     </div>
 
     <div class="btn-group" role="group" aria-label="Basic example">
-      <% params = Map.to_list(@params) |> Enum.map(fn {k, v} -> {String.to_existing_atom(k), v} end) %>
+      <% params = Map.to_list(@params) |> Enum.map(fn {k, v} -> {String.to_atom(k), v} end) %>
       <%= link "Previous", to: Kaffy.Utils.router().kaffy_resource_path(@conn, :index, @context, @resource, Keyword.merge(params, page: @page - 1)), class: "btn btn-outline-primary#{@prev_class}" %>
       <%= link "Next", to: Kaffy.Utils.router().kaffy_resource_path(@conn, :index, @context, @resource, Keyword.merge(params, page: @page + 1)), class: "btn btn-outline-primary#{@next_class}" %>
     </div>

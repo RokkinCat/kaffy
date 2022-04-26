@@ -400,7 +400,7 @@ defmodule KaffyWeb.ResourceController do
 
   # we received actions as Keyword list so action_key needs to be an atom
   defp get_action_record(actions, action_key) when is_list(actions) and is_binary(action_key) do
-    action_key = String.to_existing_atom(action_key)
+    action_key = String.to_atom(action_key)
     [action_record] = Keyword.get_values(actions, action_key)
     action_record
   end
