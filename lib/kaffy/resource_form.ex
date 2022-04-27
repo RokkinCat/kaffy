@@ -387,6 +387,9 @@ defmodule Kaffy.ResourceForm do
     end)
   end
 
+  defp build_changeset_value({:parameterized, _type, %{field: field}}),
+  do: field |> to_string()
+
   defp build_changeset_value(value) when is_tuple(value),
     do: value |> Tuple.to_list() |> Enum.join(", ")
 
