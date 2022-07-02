@@ -32,7 +32,7 @@
             </div>
         </div>
         <div class="card-body">
-            <%= f = form_for(@changeset, Kaffy.Utils.router().kaffy_resource_path(@conn, :update, @context, @resource, @changeset.data.id), method: :put, multipart: true) %>
+            <%= f = form_for(@changeset, Kaffy.Utils.router().kaffy_resource_path(@conn, :update, @context, @resource, @changeset.data.id), method: :put, multipart: true, onsubmit: "formSubmit(event)") %>
                 <%= for {field, options} <- Kaffy.ResourceAdmin.form_fields(@my_resource) do %>
                     <%= if options.update != :hidden do %>
                         <%= Kaffy.ResourceForm.kaffy_input @conn, @changeset, f, field, options %>
@@ -74,3 +74,18 @@
         </div>
     </div>
 </div>
+
+<script>
+  function formSubmit(evt) {
+    evt.target.querySelectorAll('input[type=submit]').forEach((input) => {
+        input.disabled = true
+
+      });
+  }
+</script>
+
+<style>
+input[type=submit]:disabled:hover {
+  cursor: progress;
+}
+</style>
