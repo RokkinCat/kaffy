@@ -324,6 +324,7 @@ defmodule Kaffy.ResourceForm do
 
           false ->
             options = Kaffy.Utils.repo().all(assoc)
+                      |> Enum.sort_by(fn m -> m.inserted_at end, {:desc, Date})
 
             fields = Kaffy.ResourceSchema.fields(assoc)
 
