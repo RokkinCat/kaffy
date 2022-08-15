@@ -33,9 +33,7 @@ defmodule Kaffy.ResourceForm do
     end
   end
 
-  def form_field(changeset, form, field, opts \\ [])
-
-  def form_field(changeset, form, {field, options}, opts) do
+  def form_field(changeset, form, {field, options}, opts \\ []) do
     options = options || %{}
 
     type =
@@ -59,7 +57,7 @@ defmodule Kaffy.ResourceForm do
 
     cond do
       !is_nil(choices) ->
-        select(form, field, choices, class: "custom-select")
+        select(form, field, choices, class: "custom-select", disabled: permission == :readonly)
 
       true ->
         build_html_input(
@@ -85,7 +83,7 @@ defmodule Kaffy.ResourceForm do
     schema = schema.__struct__
 
     case type do
-      {:embed, _} ->
+      {:embed, %{cardinality: :one}} ->
         embed = Kaffy.ResourceSchema.embed_struct(schema, field)
         embed_fields = Kaffy.ResourceSchema.fields(embed)
         embed_changeset = Ecto.Changeset.change(Map.get(data, field) || embed.__struct__)
@@ -93,12 +91,12 @@ defmodule Kaffy.ResourceForm do
         inputs_for(form, field, fn fp ->
           [
             {:safe, ~s(<div class="card ml-3" style="padding:15px;">)},
-            Enum.reduce(embed_fields, [], fn f, all ->
+            Enum.reduce(embed_fields, [], fn {f, embed_options}, all ->
               content_tag :div, class: "form-group" do
                 [
                   [
                     form_label(fp, f),
-                    form_field(embed_changeset, fp, {f, options}, class: "form-control")
+                    form_field(embed_changeset, fp, {f, embed_options}, class: "form-control")
                   ]
                   | all
                 ]
@@ -107,6 +105,14 @@ defmodule Kaffy.ResourceForm do
             {:safe, "</div>"}
           ]
         end)
+
+      {:embed, _} ->
+        value =
+          data
+          |> Map.get(field, "")
+          |> Kaffy.Utils.json().encode!(escape: :html_safe, pretty: true)
+
+        textarea(form, field, [value: value, rows: 4, placeholder: "JSON Content"] ++ opts)
 
       :id ->
         case Kaffy.ResourceSchema.primary_key(schema) == [field] do
@@ -178,11 +184,13 @@ defmodule Kaffy.ResourceForm do
 
         select(form, field, values, [value: value] ++ opts)
 
-      {:array, {:parameterized, Ecto.Enum, %{values: values}}} ->
-        values = Enum.map(values, &to_string/1)
+      {:parameterized, Ecto.Enum, %{mappings: mappings}} ->
         value = Map.get(data, field, nil)
+        select(form, field, mappings, [value: value] ++ opts)
 
-        multiple_select(form, field, values, [value: value] ++ opts)
+      {:array, {:parameterized, Ecto.Enum, %{mappings: mappings}}} ->
+        value = Map.get(data, field, nil)
+        multiple_select(form, field, mappings, [value: value] ++ opts)
 
       :multi ->
         values = options[:values_fn].(data, conn)
