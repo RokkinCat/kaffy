@@ -117,13 +117,13 @@ defmodule Kaffy.ResourceForm do
       :id ->
         case Kaffy.ResourceSchema.primary_key(schema) == [field] do
           true -> text_input(form, field, opts)
-          false -> text_or_assoc(conn, schema, form, field, opts)
+          false -> text_or_assoc(conn, schema, form, {field, options}, opts)
         end
 
       :binary_id ->
         case Kaffy.ResourceSchema.primary_key(schema) == [field] do
           true -> text_input(form, field, opts)
-          false -> text_or_assoc(conn, schema, form, field, opts)
+          false -> text_or_assoc(conn, schema, form, {field, options}, opts)
         end
 
       :string ->
@@ -182,11 +182,11 @@ defmodule Kaffy.ResourceForm do
         values = Enum.map(values, &to_string/1)
         value = Map.get(data, field, nil)
 
-        select(form, field, values, [value: value] ++ opts)
+        select(form, field, values, [class: "custom-select", value: value] ++ opts)
 
       {:parameterized, Ecto.Enum, %{mappings: mappings}} ->
         value = Map.get(data, field, nil)
-        select(form, field, mappings, [value: value] ++ opts)
+        select(form, field, mappings, [class: "custom-select", value: value] ++ opts)
 
       {:array, {:parameterized, Ecto.Enum, %{mappings: mappings}}} ->
         value = Map.get(data, field, nil)
@@ -217,7 +217,7 @@ defmodule Kaffy.ResourceForm do
         file_input(form, field, opts)
 
       :select ->
-        select(form, field, opts)
+        select(form, field, [class: "custom-select"] ++ opts)
 
       :date ->
         flatpickr_date(form, field, opts)
@@ -280,7 +280,7 @@ defmodule Kaffy.ResourceForm do
     ]
   end
 
-  defp text_or_assoc(conn, schema, form, field, opts) do
+  defp text_or_assoc(conn, schema, form, {field, options}, opts) do
     actual_assoc =
       Enum.filter(Kaffy.ResourceSchema.associations(schema), fn a ->
         Kaffy.ResourceSchema.association(schema, a).owner_key == field
@@ -331,8 +331,6 @@ defmodule Kaffy.ResourceForm do
             end
 
           false ->
-            options = Kaffy.Utils.repo().all(assoc)
-                      |> Enum.sort_by(fn m -> m.inserted_at end, {:desc, Date})
 
             fields = Kaffy.ResourceSchema.fields(assoc)
 
@@ -355,10 +353,20 @@ defmodule Kaffy.ResourceForm do
                 false -> elem(popular_strings, 0)
               end
 
+            options = 
+              case !is_nil(options[:values_fn]) && is_function(options[:values_fn], 2) do
+                true -> 
+                  options[:values_fn].(schema, conn)
+                false ->
+                  Kaffy.Utils.repo().all(assoc)
+                  |> Enum.sort_by(fn m -> m.inserted_at end, {:desc, Date})
+                  |> Enum.map(fn o -> {Map.get(o, string_field, "Resource ##{o.id}"), o.id} end)
+              end
+
             select(
               form,
               field,
-              Enum.map(options, fn o -> {Map.get(o, string_field, "Resource ##{o.id}"), o.id} end),
+              options,
               class: "custom-select"
             )
         end
